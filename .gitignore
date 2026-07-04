@@ -1,0 +1,5 @@
+# Ignore uploads and logs (do not commit uploaded files or logs)
+/uploads/
+/logs/
+/vendor/
+.env
