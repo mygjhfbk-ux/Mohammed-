@@ -2,6 +2,7 @@ name: supabase_phone_auth
 description: A Flutter app scaffold integrated with Supabase for phone+password auth (phone converted to email)
 environment:
   sdk: ">=2.18.0 <3.0.0"
+
 dependencies:
   flutter:
     sdk: flutter
@@ -10,6 +11,7 @@ dependencies:
   get_storage: ^2.0.3
   flutter_dotenv: ^5.0.2
   http: ^0.13.5
+  image_picker: ^0.8.7+4
 
 flutter:
   uses-material-design: true

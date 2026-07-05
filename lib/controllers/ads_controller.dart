@@ -1,8 +1,13 @@
+import 'dart:io';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/storage_service.dart';
 
 class AdsController extends GetxController {
   final SupabaseClient supabase = Supabase.instance.client;
+  final StorageService storageService = StorageService();
+
   var ads = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
 
@@ -20,9 +25,14 @@ class AdsController extends GetxController {
     }
   }
 
-  Future<bool> createAd({String? merchantId, required String title, String? imagePath, String? url}) async {
+  Future<bool> createAd({String? merchantId, required String title, XFile? imageFile, String? url}) async {
     try {
       isLoading(true);
+      String? imagePath;
+      if (imageFile != null) {
+        imagePath = await storageService.uploadImage(imageFile, pathPrefix: 'ads');
+      }
+
       await supabase.from('ads').insert({
         'merchant_id': merchantId,
         'title': title,
