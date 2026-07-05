@@ -24,20 +24,38 @@ class TransactionsController extends GetxController {
   Future<bool> addTransaction({required String merchantId, required String customerId, required String walletId, required double amount, required String type, String? notes}) async {
     try {
       isLoading(true);
-      await supabase.from('transactions').insert({
-        'merchant_id': merchantId,
-        'customer_id': customerId,
-        'wallet_id': walletId,
-        'amount': amount,
-        'type': type,
-        'notes': notes,
+
+      // Use RPC to ensure atomic update of transaction + wallet balance
+      final rpcRes = await supabase.rpc('add_transaction_and_update_wallet', params: {
+        'p_merchant_id': merchantId,
+        'p_customer_id': customerId,
+        'p_wallet_id': walletId,
+        'p_amount': amount,
+        'p_type': type,
+        'p_notes': notes,
       });
+
+      // Refresh list
       await fetchTransactions(merchantId: merchantId);
-      // Optionally update wallet balance for payments/debts
       return true;
     } catch (e) {
-      print('addTransaction error: $e');
-      return false;
+      print('addTransaction error (rpc): $e');
+      // fallback: try simple insert
+      try {
+        await supabase.from('transactions').insert({
+          'merchant_id': merchantId,
+          'customer_id': customerId,
+          'wallet_id': walletId,
+          'amount': amount,
+          'type': type,
+          'notes': notes,
+        });
+        await fetchTransactions(merchantId: merchantId);
+        return true;
+      } catch (ex) {
+        print('addTransaction fallback error: $ex');
+        return false;
+      }
     } finally {
       isLoading(false);
     }

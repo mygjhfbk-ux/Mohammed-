@@ -8,7 +8,6 @@ class AuthController extends GetxController {
   var isLoading = false.obs;
 
   String phoneToEmail(String phone) {
-    // normalize phone then build pseudo-email
     final normalized = phone.replaceAll(' ', '');
     return '$normalized@diuni.local';
   }
@@ -20,13 +19,25 @@ class AuthController extends GetxController {
       final res = await supabase.auth.signUp(email: email, password: password);
       if (res.user != null) {
         // insert profile
-        await supabase.from('profiles').insert({
+        final profileRes = await supabase.from('profiles').insert({
           'user_id': res.user!.id,
           'phone': phone,
           'name': name ?? '',
           'user_type': userType,
-        });
+        }).select().single();
+
+        // Save to local storage
+        box.write('isLoggedIn', true);
+        box.write('supabase_user_id', res.user!.id);
+        box.write('profile', profileRes);
+        box.write('profile_id', profileRes['id']);
+
         Get.snackbar('نجاح', 'تم إنشاء الحساب');
+
+        // redirect
+        if (userType == 'merchant') Get.offAllNamed('/merchant');
+        else if (userType == 'admin') Get.offAllNamed('/admin');
+        else Get.offAllNamed('/customer');
       } else {
         Get.snackbar('خطأ', 'فشل التسجيل');
       }
@@ -44,20 +55,18 @@ class AuthController extends GetxController {
       final res = await supabase.auth.signInWithPassword(email: email, password: password);
       if (res.session != null) {
         final user = res.user;
-        box.write('isLoggedIn', true);
-        box.write('supabase_user_id', user!.id);
         // fetch profile
-        final profile = await supabase.from('profiles').select().eq('user_id', user.id).maybeSingle();
+        final profile = await supabase.from('profiles').select().eq('user_id', user!.id).maybeSingle();
         if (profile != null) {
+          box.write('isLoggedIn', true);
+          box.write('supabase_user_id', user.id);
           box.write('profile', profile);
+          box.write('profile_id', profile['id']);
+
           final type = profile['user_type'] ?? 'customer';
-          if (type == 'merchant') {
-            Get.offAllNamed('/merchant');
-          } else if (type == 'admin') {
-            Get.offAllNamed('/admin');
-          } else {
-            Get.offAllNamed('/customer');
-          }
+          if (type == 'merchant') Get.offAllNamed('/merchant');
+          else if (type == 'admin') Get.offAllNamed('/admin');
+          else Get.offAllNamed('/customer');
         } else {
           Get.snackbar('تنبيه', 'الملف الشخصي غير موجود');
         }
@@ -75,5 +84,9 @@ class AuthController extends GetxController {
     await supabase.auth.signOut();
     await box.erase();
     Get.offAllNamed('/');
+  }
+
+  String? currentProfileId() {
+    return box.read('profile_id');
   }
 }

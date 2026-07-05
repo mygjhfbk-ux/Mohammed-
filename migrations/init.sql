@@ -1,5 +1,5 @@
 -- migrations/init.sql
--- Complete schema for Diuni (Supabase) — profiles, merchants, customers, wallets, transactions, ads, notifications, join_requests, subscriptions, and helpful views/indexes
+-- Complete schema for Diuni (Supabase) — profiles, merchants, customers, wallets, transactions, ads, notifications, join_requests, subscriptions, helpful views/indexes and helper RPC functions
 
 -- Enable pgcrypto for gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   name text,
   user_type text NOT NULL DEFAULT 'customer', -- 'merchant' | 'customer' | 'admin'
   business_name text,
+  image_path text,
   metadata jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz DEFAULT now()
 );
@@ -124,7 +125,40 @@ CREATE INDEX IF NOT EXISTS transactions_merchant_idx ON transactions(merchant_id
 CREATE INDEX IF NOT EXISTS transactions_customer_idx ON transactions(customer_id);
 CREATE INDEX IF NOT EXISTS wallets_merchant_idx ON wallets(merchant_id);
 
--- Example: seed an admin profile (OPTIONAL) — comment out if not desired
--- INSERT INTO profiles (user_id, phone, name, user_type) VALUES ('00000000-0000-0000-0000-000000000000','+966000000000','Administrator','admin') ON CONFLICT DO NOTHING;
+-- RPC function: add_transaction_and_update_wallet
+-- This function inserts a transaction and updates the wallet balance atomically.
+CREATE OR REPLACE FUNCTION public.add_transaction_and_update_wallet(
+  p_merchant_id uuid,
+  p_customer_id uuid,
+  p_wallet_id uuid,
+  p_amount numeric,
+  p_type text,
+  p_notes text DEFAULT NULL
+) RETURNS TABLE(result_transaction_id uuid) LANGUAGE plpgsql AS $$
+BEGIN
+  IF p_type NOT IN ('debt','payment') THEN
+    RAISE EXCEPTION 'Invalid type';
+  END IF;
+
+  -- Insert transaction
+  INSERT INTO transactions (merchant_id, customer_id, wallet_id, amount, type, notes)
+  VALUES (p_merchant_id, p_customer_id, p_wallet_id, p_amount, p_type, p_notes)
+  RETURNING id INTO result_transaction_id;
+
+  -- Update wallet balance: debts increase balance (money owed), payments decrease it (assumption)
+  IF p_type = 'debt' THEN
+    UPDATE wallets SET balance = balance + p_amount WHERE id = p_wallet_id;
+  ELSE
+    UPDATE wallets SET balance = balance - p_amount WHERE id = p_wallet_id;
+  END IF;
+
+  RETURN;
+END;
+$$;
+
+-- Seed data (optional) — small sample records for testing
+INSERT INTO profiles (phone, name, user_type, business_name)
+SELECT '+966500000001', 'Admin', 'admin', 'Admin Shop'
+WHERE NOT EXISTS (SELECT 1 FROM profiles WHERE phone = '+966500000001');
 
 -- End of migration
