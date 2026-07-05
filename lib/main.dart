@@ -9,6 +9,7 @@ import 'views/register_view.dart';
 import 'views/merchant_dashboard.dart';
 import 'views/customer_dashboard.dart';
 import 'views/admin_users_view.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,7 @@ Future<void> main() async {
       GetPage(name: '/customer', page: () => CustomerDashboard()),
       GetPage(name: '/admin', page: () => AdminUsersView()),
     ],
+    theme: AppTheme.light(),
     locale: const Locale('ar'),
   ));
 }

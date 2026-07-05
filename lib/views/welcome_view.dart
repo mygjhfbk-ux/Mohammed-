@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'login_view.dart';
-import 'register_view.dart';
+import '../widgets/primary_button.dart';
 
 class WelcomeView extends StatelessWidget {
   WelcomeView({super.key});
@@ -10,29 +9,21 @@ class WelcomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('مرحباً بك في تطبيق ديوني', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    Get.to(() => LoginView());
-                  },
-                  child: Text('تسجيل الدخول'),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: () {
-                    Get.to(() => RegisterView());
-                  },
-                  child: Text('إنشاء حساب جديد'),
-                ),
-              ],
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(child: Text('مرحباً بك في تطبيق ديوني', style: Theme.of(context).textTheme.headline6)),
+              const SizedBox(height: 24),
+              PrimaryButton(label: 'تسجيل الدخول', onPressed: () => Get.toNamed('/login')),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => Get.toNamed('/register'),
+                child: const Text('إنشاء حساب جديد'),
+              ),
+            ],
           ),
         ),
       ),

@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../controllers/ads_controller.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AdsView extends StatefulWidget {
   AdsView({super.key});
@@ -24,21 +24,21 @@ class _AdsViewState extends State<AdsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('الإعلانات')),
+      appBar: AppBar(title: const Text('الإعلانات')),
       body: Obx(() {
-        if (ctrl.isLoading.value) return Center(child: CircularProgressIndicator());
-        if (ctrl.ads.isEmpty) return Center(child: Text('لا توجد إ��لانات'));
+        if (ctrl.isLoading.value) return const Center(child: CircularProgressIndicator());
+        if (ctrl.ads.isEmpty) return const Center(child: Text('لا توجد إعلانات'));
         return ListView.builder(
           itemCount: ctrl.ads.length,
           itemBuilder: (context, idx) {
             final a = ctrl.ads[idx];
             return ListTile(
               leading: a['image_path'] != null
-                  ? Image.network(a['image_path'], width: 56, height: 56, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.image))
-                  : Icon(Icons.image),
+                  ? CachedNetworkImage(imageUrl: a['image_path'], width: 64, height: 64, fit: BoxFit.cover, placeholder: (_, __) => const CircularProgressIndicator(), errorWidget: (_, __, ___) => const Icon(Icons.broken_image))
+                  : const Icon(Icons.image),
               title: Text(a['title'] ?? 'إعلان'),
               subtitle: Text(a['url'] ?? ''),
-              trailing: IconButton(icon: Icon(Icons.delete), onPressed: () => ctrl.deleteAd(a['id'])),
+              trailing: IconButton(icon: const Icon(Icons.delete), onPressed: () => ctrl.deleteAd(a['id'])),
             );
           },
         );
@@ -51,13 +51,13 @@ class _AdsViewState extends State<AdsView> {
           await Get.bottomSheet(
             StatefulBuilder(builder: (context, setState) {
               return Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(12))),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(controller: titleCtrl, decoration: InputDecoration(labelText: 'العنوان')),
-                    TextField(controller: urlCtrl, decoration: InputDecoration(labelText: 'الرابط')),
+                    TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'العنوان')),
+                    TextField(controller: urlCtrl, decoration: const InputDecoration(labelText: 'الرابط')),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -67,21 +67,21 @@ class _AdsViewState extends State<AdsView> {
                             final XFile? picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
                             if (picked != null) setState(() => _picked = picked);
                           },
-                          icon: Icon(Icons.photo),
-                          label: Text('اختر صورة'),
+                          icon: const Icon(Icons.photo),
+                          label: const Text('اختر صورة'),
                         ),
                         const SizedBox(width: 12),
-                        _picked != null ? Text('تم اختيار صورة') : Text('لم يتم اختيار صورة')
+                        _picked != null ? const Text('تم اختيار صورة') : const Text('لم يتم اختيار صورة')
                       ],
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () async {
                         await ctrl.createAd(title: titleCtrl.text.trim(), imageFile: _picked, url: urlCtrl.text.trim());
-                        _picked = null;
+                        setState(() => _picked = null);
                         Get.back();
                       },
-                      child: Text('حفظ'),
+                      child: const Text('حفظ'),
                     )
                   ],
                 ),
@@ -90,7 +90,7 @@ class _AdsViewState extends State<AdsView> {
             isScrollControlled: true,
           );
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
