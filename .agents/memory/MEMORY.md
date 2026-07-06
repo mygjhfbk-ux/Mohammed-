@@ -1,0 +1,1 @@
+- [ديوني Flutter project](diuoni-project.md) — schema uses `account_limit` (not `debt_limit`) and `wallet_type`/`wallet_number`; auth via phone→email conversion; google_fonts for Cairo; no local font files needed.
